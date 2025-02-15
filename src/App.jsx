@@ -41,8 +41,11 @@ function App() {
       <div className="formWrapper">
         <h1>Phonebook</h1>
         <ContactForm save={saveContact} />
-        <SearchBox filter={filter} setFilter={setFilter} />
-        {filteredContacts.length === 0 && <p>No contacts found</p>}
+        <SearchBox
+          filter={filter}
+          setFilter={setFilter}
+          filteredContacts={filteredContacts}
+        />
       </div>
       <div className="listWrapper">
         <ContactList
