@@ -1,61 +1,56 @@
-import {useEffect, useState} from 'react';
-import Description from './components/Description/Description';
-import Options from '../src/components/Options/Options';
-import Feedback from '../src/components/Feedback/Feedback';
-import Notification from '../src/components/Notification/Notification';
+import {useState, useEffect} from 'react';
+import {Formik} from 'formik';
+import {nanoid} from 'nanoid';
+import ContactForm from './components/ContactForm/ContactForm';
+import ContactList from './components/ContactList/ContactList';
+import SearchBox from './components/SearchBox/SearchBox';
 
 function App() {
-  const descriptionData = {
-    title: 'Sip Happens Café',
-    text: 'Please leave your feedback about our service by selecting one of the options below.',
+  const loadContacts = () => {
+    const storedContacts = localStorage.getItem('contacts');
+    return storedContacts ? JSON.parse(storedContacts) : [];
   };
 
-  const {title, text} = descriptionData;
-  const [feedback, setFeedback] = useState(() => {
-    const savedFeedback = localStorage.getItem('feedback');
-    return savedFeedback
-      ? JSON.parse(savedFeedback)
-      : {good: 0, neutral: 0, bad: 0};
-  });
+  const [contacts, setContacts] = useState(loadContacts());
 
-  const {good, neutral, bad} = feedback;
-  const totalFeedback = good + neutral + bad;
-  const positiveFeedback =
-    totalFeedback > 0 ? Math.round((good / totalFeedback) * 100) : 0;
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('feedback', JSON.stringify(feedback));
-  }, [good, neutral, bad]);
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  const updateFeedback = feedbackType => {
-    setFeedback(prevFeedback => ({
-      ...prevFeedback,
-      [feedbackType]: prevFeedback[feedbackType] + 1,
-    }));
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const saveContact = newContact => {
+    setContacts(prevContacts => {
+      const updatedContacts = [...prevContacts, {...newContact, id: nanoid()}];
+      return updatedContacts;
+    });
   };
 
-  const resetFeedback = () => {
-    setFeedback({good: 0, neutral: 0, bad: 0});
+  const deleteContact = id => {
+    setContacts(prevContacts =>
+      prevContacts.filter(contact => contact.id !== id)
+    );
   };
 
   return (
-    <>
-      <Description title={title} text={text} />
-      <Options
-        updateFeedback={updateFeedback}
-        resetFeedback={resetFeedback}
-        totalFeedback={totalFeedback}
-      />
-      {totalFeedback === 0 ? (
-        <Notification message="No feedback yet." />
-      ) : (
-        <Feedback
-          feedback={feedback}
-          totalFeedback={totalFeedback}
-          positiveFeedback={positiveFeedback}
+    <div className="appWrapper">
+      <div className="formWrapper">
+        <h1>Phonebook</h1>
+        <ContactForm save={saveContact} />
+        <SearchBox filter={filter} setFilter={setFilter} />
+        {filteredContacts.length === 0 && <p>No contacts found</p>}
+      </div>
+      <div className="listWrapper">
+        <ContactList
+          contacts={filteredContacts}
+          deleteContact={deleteContact}
         />
-      )}
-    </>
+      </div>
+    </div>
   );
 }
 
